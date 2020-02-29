@@ -15,15 +15,24 @@ backupdirectory=$(basename $(pwd))
 #set debug for all commands
 debug=&>> /var/log/debug_backup_${backupdirectory}.log 
 #check if directorys exists, else create them first
+CreateDirectory()
+{
+    #check if directory exists, otherwise create it
+    #input : directory
+    #output : none
+    inDirectory=$1
+    echo 
+    if [ -d $inDirectory ]
+        then
+            echo "$inDirectory already exists. skip create"$debug
+        else
+            echo "failed to find $inDirectory. Create it now! "$debug
+            mkdir $inDirectory
+    fi 
+}
 for directory in $backupdirectory ${backuppath}$date ${backuppath}${date}/${backupdirectory}
 do
-    if [ -d $directory ]
-    then
-        echo "$directory already exists. skip create"$debug
-    else
-        echo "failed to find $directory. Create it now! "$debug
-        mkdir $directory
-    fi 
+    CreateDirectory $directory 
 done
 cd $backuppath
 #Check if file exists. Overwrite or create then.
@@ -32,12 +41,11 @@ for file in $sourcepath/*; do
         then
             echo "$file exists. Overwrite!"  $debug
         else
-            echo "$file none exist. Create!"$debug
+            echo "$file not exist. Create!"$debug
     fi
     cp -av $file ${backuppath}${date}/${backupdirectory} ${debug}
 done
 
 
 #Delete all Backups older than $olderthen days
-echo $olderthen
 find $backuppath${date} -mtime +$olderthen -exec rm -rf {} \;$debug
