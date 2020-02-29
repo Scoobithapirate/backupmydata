@@ -13,14 +13,12 @@ sourcepath=/etc/letsencrypt
 cd $sourcepath
 backupdirectory=$(basename $(pwd))
 #set debug for all commands
-debug=&>> /var/log/debug_backup_${backupdirectory}.log 
 #check if directorys exists, else create them first
 CreateDirectory(){
     #check if directory exists, otherwise create it
     #input : directory
     #output : none
     inDirectory=$1
-    echo 
     if [ -d $inDirectory ]
         then
             WriteMessageToLog "$inDirectory already exists. skip create"
@@ -40,8 +38,14 @@ CheckFileExists(){
     fi
 }
 WriteMessageToLog(){
+    #Write overgiven string to LogFile
+    debugLevel=$2
+    if [ -z $2 ]; then
+        #If no parameter overgiven set Logging to debug.
+        echo $inMessage >> /var/log/debug_backup_${backupdirectory}.log
+    fi
     inMessage=$1
-    echo $inMessage$debug
+
 }
 for directory in $backupdirectory ${backuppath}$date ${backuppath}${date}/${backupdirectory}
 do
