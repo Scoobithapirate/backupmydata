@@ -15,8 +15,7 @@ backupdirectory=$(basename $(pwd))
 #set debug for all commands
 debug=&>> /var/log/debug_backup_${backupdirectory}.log 
 #check if directorys exists, else create them first
-CreateDirectory()
-{
+CreateDirectory(){
     #check if directory exists, otherwise create it
     #input : directory
     #output : none
@@ -24,11 +23,25 @@ CreateDirectory()
     echo 
     if [ -d $inDirectory ]
         then
-            echo "$inDirectory already exists. skip create"$debug
+            WriteMessageToLog "$inDirectory already exists. skip create"
         else
-            echo "failed to find $inDirectory. Create it now! "$debug
+            WriteMessageToLog "failed to find $inDirectory. Create it now! "
             mkdir $inDirectory
     fi 
+}
+CheckFileExists(){
+    #check if file exists, and write log entrys
+    inFile=$1
+    if [ -f $inFile ]
+        then
+            WriteMessageToLog "$inFile exists. Overwrite!" 
+        else
+            WriteMessageToLog "$inFile not exist. Create!"
+    fi
+}
+WriteMessageToLog(){
+    inMessage=$1
+    echo $inMessage$debug
 }
 for directory in $backupdirectory ${backuppath}$date ${backuppath}${date}/${backupdirectory}
 do
@@ -37,13 +50,14 @@ done
 cd $backuppath
 #Check if file exists. Overwrite or create then.
 for file in $sourcepath/*; do 
-    if [ -f $file ]
+    if [ -d $file ] 
         then
-            echo "$file exists. Overwrite!"  $debug
+            echo "Directory $file found"
+            CreateDirectory $file
         else
-            echo "$file not exist. Create!"$debug
-    fi
-    cp -av $file ${backuppath}${date}/${backupdirectory} ${debug}
+            CheckFileExists $file
+            cp -a $file ${backuppath}${date}/${backupdirectory} ${debug}
+        fi
 done
 
 
