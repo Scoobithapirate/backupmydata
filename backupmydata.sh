@@ -7,6 +7,8 @@ date=$(date +%d_%m_%Y)
 olderthen=3
 #Set the destination backup directory
 backuppath=$(echo "/opt/backup/")
+#Set log path
+logpath=$(echo "/var/log/backupmydata")
 #Set the source directory/file
 sourcepath=/etc/letsencrypt
 #Get the program / directory name for abstraction
@@ -28,7 +30,9 @@ CreateDirectory(){
     fi 
 }
 CheckFileExists(){
-    #check if file exists, and write log entrys
+    #check if file exists, and write log entrys.
+    #input : file
+    #output : none
     inFile=$1
     if [ -f $inFile ]
         then
@@ -39,15 +43,34 @@ CheckFileExists(){
 }
 WriteMessageToLog(){
     #Write overgiven string to LogFile
-    debugLevel=$2
-    if [ -z $2 ]; then
-        #If no parameter overgiven set Logging to debug.
-        echo $inMessage >> /var/log/debug_backup_${backupdirectory}.log
-    fi
+    #input : string
+    #output : log entry in $logpath
     inMessage=$1
+    debugLevel=$2
+    if [ -z $2 ] 
+    then
+        #No logging.
+        debugLevel=7
+    fi
+    case $debugLevel in
+                1 )
+                    #Debug. See all Messages in terminal session and get log file
+                    echo $inMessage | tee {} >> $logpath/${date}/${backupdirectory}/debug.log
+                ;;
+                2 )
+                    #Create logFile. Need for further analyse by remote.
+                    echo $inMessage >> $logpath/${date}/${backupdirectory}/debug.log
+                ;;
+                7 ) 
+                    #No logging. Direct to /dev/null
+                    echo $inMessage >> /dev/null
+                ;;
 
+
+    esac
+            #If no parameter overgiven set Logging to debug.
 }
-for directory in $backupdirectory ${backuppath}$date ${backuppath}${date}/${backupdirectory}
+for directory in $logpath $logpath/${date} $logpath/${date}/${backupdirectory} $backupdirectory ${backuppath}$date ${backuppath}${date}/${backupdirectory} 
 do
     CreateDirectory $directory 
 done
@@ -56,14 +79,12 @@ cd $backuppath
 for file in $sourcepath/*; do 
     if [ -d $file ] 
         then
-            echo "Directory $file found"
             CreateDirectory $file
         else
             CheckFileExists $file
             cp -a $file ${backuppath}${date}/${backupdirectory} ${debug}
         fi
 done
-
 
 #Delete all Backups older than $olderthen days
 find $backuppath${date} -mtime +$olderthen -exec rm -rf {} \;$debug
