@@ -31,8 +31,8 @@ CreateDirectory(){
     fi 
 }
 gitInitRoutine(){
-    inDirectory = $1
-    cd inDirectory
+    inDirectory=$1
+    cd $inDirectory
     git init
     git commit -a -m "git init"
     cd -
