@@ -27,7 +27,15 @@ CreateDirectory(){
         else
             WriteMessageToLog "failed to find $inDirectory. Create it now! "
             mkdir $inDirectory
+            gitInitRoutine $inDirectory
     fi 
+}
+gitInitRoutine(){
+    inDirectory = $1
+    cd inDirectory
+    git init
+    git commit -a -m "git init"
+    cd -
 }
 CheckFileExists(){
     #check if file exists, and write log entrys.
