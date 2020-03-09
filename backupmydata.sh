@@ -34,6 +34,7 @@ gitInitRoutine(){
     inDirectory=$1
     cd $inDirectory
     git init
+    git add *
     git commit -a -m "git init"
     cd -
 }
