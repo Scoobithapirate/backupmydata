@@ -25,18 +25,32 @@ CreateDirectory(){
         then
             WriteMessageToLog "$inDirectory already exists. skip create"
         else
-            WriteMessageToLog "failed to find $inDirectory. Create it now! "
+            
             mkdir $inDirectory
-            gitInitRoutine $inDirectory
+
     fi 
 }
 gitInitRoutine(){
     inDirectory=$1
     cd $inDirectory
-    git init
-    git add *
-    git commit -a -m "git init"
+    git init 
+    gitInitCommit 
     cd -
+}
+gitInitCommit(){
+    #Overgive directory path and init new git repository
+    #input : directorypath
+    #output : none
+    git add *
+    gitUpdateCommit "git init"
+}
+gitUpdateCommit(){
+    #Overgive inCommit message and let shell script update version in git master branch.
+    #input : string
+    #output : none
+    inCommit=$1
+    git add *
+    git commit -a -m $1
 }
 CheckFileExists(){
     #check if file exists, and write log entrys.
@@ -59,7 +73,7 @@ WriteMessageToLog(){
     if [ -z $2 ] 
     then
         #No logging.
-        debugLevel=7
+        debugLevel=1
     fi
     case $debugLevel in
                 1 )
@@ -79,7 +93,7 @@ WriteMessageToLog(){
     esac
             #If no parameter overgiven set Logging to debug.
 }
-for directory in $logpath $logpath/${date} $logpath/${date}/${backupdirectory} $backupdirectory ${backuppath}$date ${backuppath}${date}/${backupdirectory} 
+for directory in $backuppath $logpath ${backuppath}$date $logpath/${date} $logpath/${date}/${backupdirectory}  ${backuppath}${date}/${backupdirectory} 
 do
     CreateDirectory $directory 
 done
@@ -97,3 +111,14 @@ done
 
 #Delete all Backups older than $olderthen days
 find $backuppath${date} -mtime +$olderthen -exec rm -rf {} \;$debug
+
+#Update Version
+if ! test -d $backuppath${date}/.git 
+then
+    gitInitRoutine $backuppath${date}
+    cd $backuppath${date}
+    gitUpdateCommit "$(date +%T)"
+else
+    cd $backuppath${date}
+    gitUpdateCommit "$(date +%T)"
+fi
