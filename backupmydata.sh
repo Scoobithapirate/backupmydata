@@ -1,9 +1,25 @@
 #!/bin/bash
-#Import settings from config.sh
-. ./config.sh
+#
+#Perform daily backup of directory
+# backupmydata 
+date=$(date +%d_%m_%Y)
+#Set the value how long to keep files in days.
+olderthen=3
+#Set the destination backup directory
+backuppath="/opt/backup/"
+#Set log path
+logpath="/var/log/backupmydata"
+#Set the source directory/file
+sourcepath=$1
 #Get the program / directory name for abstraction
-cd $sourcepath
-backupdirectory=$(basename $(pwd))
+
+if [ -d $sourcepath ] 
+then
+    cd $sourcepath
+    backupdirectory=/$(basename $(pwd))
+else
+    backupdirectory=$sourcepath
+fi
 #check if directorys exists, else create them first
 CreateDirectory(){
     #check if directory exists, otherwise create it
@@ -12,10 +28,11 @@ CreateDirectory(){
     inDirectory=$1
     if [ -d $inDirectory ]
         then
-            WriteMessageToLog "$inDirectory already exists. skip create"
+            echo "$inDirectory Already exists! Skip"
         else
             
-            mkdir $inDirectory
+            mkdir -p $inDirectory
+            echo "Try to create $inDirectory"
 
     fi 
 }
@@ -67,11 +84,11 @@ WriteMessageToLog(){
     case $debugLevel in
                 1 )
                     #Debug. See all Messages in terminal session and get log file
-                    echo $inMessage | tee {} >> $logpath/${date}/${backupdirectory}/debug.log
+                    echo $inMessage | tee {} >> $logpath/${date}/debug.log
                 ;;
                 2 )
                     #Create logFile. Need for further analyse by remote.
-                    echo $inMessage >> $logpath/${date}/${backupdirectory}/debug.log
+                    echo $inMessage >> $logpath/${date}/debug.log
                 ;;
                 7 ) 
                     #No logging. Direct to /dev/null
@@ -82,24 +99,19 @@ WriteMessageToLog(){
     esac
             #If no parameter overgiven set Logging to debug.
 }
-for directory in $backuppath $logpath ${backuppath}$date $logpath/${date} $logpath/${date}/${backupdirectory}  ${backuppath}${date}/${backupdirectory} 
+for directory in $logpath/${date} ${backuppath}${date}${backupdirectory} 
 do
     CreateDirectory $directory 
 done
 cd $backuppath
 #Check if file exists. Overwrite or create then.
-for file in $sourcepath/*; do 
-    if [ -d $file ] 
-        then
-            CreateDirectory $file
-        else
-            CheckFileExists $file
-            cp -a $file ${backuppath}${date}/${backupdirectory} ${debug}
-        fi
+for file in $sourcepath; do 
+    cp -r $file ${backuppath}${date}/${backupdirectory} ${debug}
 done
 
 #Delete all Backups older than $olderthen days
-find $backuppath${date} -mtime +$olderthen -exec rm -rf {} \;$debug
+find $backuppath -mtime +$olderthen -exec rm -rf {} \;$debug
+
 
 #Update Version
 if ! test -d $backuppath${date}/.git 
